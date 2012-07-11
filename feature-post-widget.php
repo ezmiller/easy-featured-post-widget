@@ -174,7 +174,7 @@ class Feature_Post_Widget extends WP_Widget {
 		echo $content;
 	}
 }
-add_action('widgets_init', create_function('', 'return register_widget("Window_Widget");'));
+add_action('widgets_init', create_function('', 'return register_widget("Feature_Post_Widget");'));
 
 /*// donate link on manage plugin page
 add_filter('plugin_row_meta', 'feature_post_widget_donate_link', 10, 2);
