@@ -101,7 +101,6 @@ class Easy_Featured_Post_Widget extends WP_Widget {
 	}
 
 	function form( $instance ) {
-		ChromePhp::log('form $instance object:', $instance);
 		// Set up some default widget settings.
 		$defaults = array(  'post-to-display' => '',
 						 	'media-frame-width' => '220',
