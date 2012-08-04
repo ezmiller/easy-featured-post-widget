@@ -18,11 +18,14 @@ class Easy_Featured_Post_Widget extends WP_Widget {
 
 		// get user settings
 		$post_to_display = empty($instance['post-to-display']) ? 'news' : $instance['post-to-display'];
-		$mf_width = empty($instance['media-frame-width']) ? '220' : $instance['media-frame-width'];
-		$mf_height = empty($instance['media-frame-height']) ? '120' : $instance['media-frame-height'];
+		$set_width_in_css = $instance['set-width-in-css'];
+		$set_height_in_css = $instance['set-height-in-css'];
+		if ( $set_width_in_css == 'on' ) 
+			$mf_width = empty($instance['media-frame-width']) ? '220' : $instance['media-frame-width'];
+		if ( $set_height_in_css == 'on' ) 
+			$mf_height = empty($instance['media-frame-height']) ? '120' : $instance['media-frame-height'];
 		$img_offset_x = empty($instance['img-offset-x']) ? '0' : $instance['img-offset-x'];
 		$img_offset_y = empty($instance['img-offset-y']) ? '0' : $instance['img-offset-y'];
-
 		
 		//$query = new WP_Query( array( 'category_name' => $category_slug, 'posts_per_page' => 1 ) );
 		$query = new WP_Query( 'p=' . $post_to_display );
@@ -62,8 +65,10 @@ class Easy_Featured_Post_Widget extends WP_Widget {
         		$content .= '<iframe id="media-frame" width"' . $mf_width . '" height="' . $mf_height . '" src="' . $url .'"></iframe>';
         	}
 		    elseif ( strlen($img) > 0 ) { // it's an image
-			    $content = '<div id="media-frame" style="overflow:hidden; width:' . $mf_width . 'px; height:' . $mf_height . 'px;">';
-			    $content .= '<img src="' . $img . '" width="'. $mf_width . '"';
+			    $content = '<div id="media-frame" style="overflow:hidden;';
+			    $content .= $set_width_in_css ? '' : 'width:' . $mf_width . 'px;';
+			    $content .= $set_height_in_css ? '' : 'height:' . $mf_height . 'px;';
+			    $content .= '"><img src="' . $img . '" width="'. $mf_width . '"';
 			    $content .= ' style="margin-top:' . $img_offset_y . 'px; margin-left:' . $img_offset_x . 'px;"/>';
 			    $content .= '</div>';
 			}
@@ -83,10 +88,12 @@ class Easy_Featured_Post_Widget extends WP_Widget {
 
 	function update( $new_instance, $old_instance ) {
 		$instance = $old_instance;
-
+		
 		$instance['post-to-display'] = strip_tags($new_instance['post-to-display']);
 		$instance['media-frame-width'] = strip_tags($new_instance['media-frame-width']);
+		$instance['set-width-in-css'] = strip_tags($new_instance['set-width-in-css']) ? 1 : 0;
 		$instance['media-frame-height'] = strip_tags($new_instance['media-frame-height']);
+		$instance['set-height-in-css'] = strip_tags($new_instance['set-height-in-css']) ? 1 : 0;
 		$instance['img-offset-x'] = strip_tags($new_instance['img-offset-x']);
 		$instance['img-offset-y'] = strip_tags($new_instance['img-offset-y']);
 
@@ -94,11 +101,13 @@ class Easy_Featured_Post_Widget extends WP_Widget {
 	}
 
 	function form( $instance ) {
-		
+		ChromePhp::log('form $instance object:', $instance);
 		// Set up some default widget settings.
 		$defaults = array(  'post-to-display' => '',
-						 	'media-frame-width' => '220', 
-						 	'media-frame-height' => '120', 
+						 	'media-frame-width' => '220',
+						 	'set-width-in-css' => 0,
+						 	'media-frame-height' => '120',
+						 	'set-height-in-css' => 0, 
 						 	'img-offset-x' => '0',
 						 	'img-offset-y' => '0' );
 		$instance = wp_parse_args( (array) $instance, $defaults ); 
@@ -140,33 +149,82 @@ class Easy_Featured_Post_Widget extends WP_Widget {
 		$content .= '</select>';
 		$content .= '</p>';
 
+		// Width input
 		$content .= "<p>";
 		$content .= '<label for="' . $this->get_field_id('media-frame-width') . '">Image/Video/Embed Width (in px): </label><br/>';
-		$content .= '<input type="number" id="' . $this->get_field_id('media-frame-width') . '"';
+		$content .= '<input style="width:50%" type="number" id="' . $this->get_field_id('media-frame-width') . '"';
 		$content .= ' name="' . $this->get_field_name('media-frame-width') . '"'; 
-		$content .= ' value="' . $instance['media-frame-width'] . '"></input>';
+		$content .= ' value="' . $instance['media-frame-width'] . '"';
+		if ( $instance['set-width-in-css'] ) {
+			$content .= ' readonly="readonly"';
+		}
+		$content .= '></input>';
+		$content .= '<input style="margin-left: .6em" class="checkbox" type="checkbox"';
+		$content .= ' id="' .$this->get_field_id('set-width-in-css') . '"';
+		$content .= ' name="' . $this->get_field_name('set-width-in-css') . '" ';
+		$content .= checked($instance['set-width-in-css'], 1, false);
+		$content .= '></input>';
+		$content .= '<label for="' . $this->get_field_id('set-width-in-css') . '"';
+		$content .= ' title="Check to allow your site&#39;s css style to override width."> Set in CSS</label>';
 		$content .= '</p>';
 
+		// Height input
 		$content .= "<p>";
 		$content .= '<label for="' . $this->get_field_id('media-frame-height') . '">Image/Video/Embed Height (in px): </label><br/>';
-		$content .= '<input type="number" id="' . $this->get_field_id('media-frame-height') . '"';
+		$content .= '<input style="width:50%" type="number" id="' . $this->get_field_id('media-frame-height') . '"';
 		$content .= ' name="' . $this->get_field_name('media-frame-height') . '"';
-		$content .= ' value="' . $instance['media-frame-height'] . '"/>';
+		$content .= ' value="' . $instance['media-frame-height'] . '"';
+		if ( $instance['set-height-in-css'] ) {
+			$content .= ' readonly="readonly"';
+		}
+		$content .= '></input>';
+		$content .= '<input style="margin-left: .6em" type="checkbox" id="' .$this->get_field_id('set-height-in-css') . '"';
+		$content .= ' name="' . $this->get_field_name('set-height-in-css') . '" ';
+		$content .= checked($instance['set-height-in-css'], 1, false);
+		$content .= '></input>';
+		$content .= '<label for="' . $this->get_field_id('set-height-in-css') . '"';
+		$content .= ' title="Check to allow your site&#39;s css style to override height."> Set in CSS</label>';
 		$content .= '</p>';
 
+		$content .= "<p>If the post contains an image, use the settings below to position the image within the frame size set above:</p>";
+
+		// Image Offset-X
 		$content .= "<p>";
 		$content .= '<label for="' . $this->get_field_id('img-offset-x') . '">Image Offset X-axis (in px): </label>';
-		$content .= '<input type="number" id="' . $this->get_field_id('img-offset-x') . '"';
+		$content .= '<input style="width:50%" type="number" id="' . $this->get_field_id('img-offset-x') . '"';
 		$content .= ' name="' . $this->get_field_name('img-offset-x') . '"';
 		$content .= ' value="' . $instance['img-offset-x'] . '"/>';
 		$content .= '</p>';
 
+		// Image Offset-Y
 		$content .= "<p>";
 		$content .= '<label for="' . $this->get_field_id('img-offset-y') . '">Image Offset Y-axis (in px): </label>';
-		$content .= '<input type="number" id="' . $this->get_field_id('img-offset-y') . '"';
+		$content .= '<input style="width:50%" type="number" id="' . $this->get_field_id('img-offset-y') . '"';
 		$content .= ' name="' . $this->get_field_name('img-offset-y') . '"';
 		$content .= ' value="' . $instance['img-offset-y'] . '"/>';
 		$content .= '</p>';
+
+		// jQuery script to manage fields necessary for different versions of player
+        $content .= '<script>';
+        $content .= 'jQuery(document).ready(function () { ';
+            $content .= 'jQuery("#' . $this->get_field_id('set-width-in-css') . '").change(function() { ';
+            	$content .= 'if (jQuery("#' . $this->get_field_id('set-width-in-css') . '").is(":checked")) { ';
+            		$content .= 'jQuery("#' . $this->get_field_id('media-frame-width') . '").attr("readonly", "readonly");';
+            	$content .= ' }';
+            	$content .= ' else { ';
+            		$content .= 'jQuery("#' . $this->get_field_id('media-frame-width') . '").removeAttr("readonly");';
+            	$content .= ' }';
+            $content .= '});';
+			$content .= 'jQuery("#' . $this->get_field_id('set-height-in-css') . '").change(function() { ';
+            	$content .= 'if (jQuery("#' . $this->get_field_id('set-height-in-css') . '").is(":checked")) { ';
+            		$content .= 'jQuery("#' . $this->get_field_id('media-frame-height') . '").attr("readonly", "readonly");';
+            	$content .= ' }';
+            	$content .= ' else { ';
+            		$content .= 'jQuery("#' . $this->get_field_id('media-frame-height') . '").removeAttr("readonly");';
+            	$content .= ' }';
+            $content .= '});';
+        $content .= '});';
+        $content .= '</script>';
 
 		// Output form.
 		echo $content;

@@ -32,4 +32,7 @@ require_once dirname(__FILE__) . '/easy-featured-post-widget-class.php';
 // Initialize Widget
 add_action('widgets_init', create_function('', 'return register_widget("Easy_Featured_Post_Widget");'));
 
+require_once( '/home/ethan/www/ld/wp-content/themes/lavender-diamond-theme/library/ChromePHP/ChromePhp.php');
+    ChromePhp::log('hello world');
+
 ?>
