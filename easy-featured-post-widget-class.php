@@ -77,8 +77,19 @@ class Easy_Featured_Post_Widget extends WP_Widget {
 			// create content within div
 			$content .= '<div class="feature-content">';
 			$content .= '<h1>' . get_the_title($query->post->ID) . '</h1>';
-			$pattern = '#(<img[^>]+\>)|(<iframe[^>]+\>)|(</iframe>)|(</img>)#i';
-			$content .= '<p>' . preg_replace($pattern, '', get_the_content('View all...')) . '</p></div>'; // remove iframes or imgs from content
+			// get content and apply filters
+			$post_content = apply_filters('the_content', get_the_content('View all...'));
+			$post_content = str_replace(']]>', ']]&gt;', $post_content);
+			if ( preg_match("/<img[^>]+\>/i", $post_content) ) { // there's an image at start of post, so remove it
+				$post_content = preg_replace("/<img[^>]+\>/i", "", $post_content, 1);
+			}
+			else if ( preg_match("/<iframe[^>]+\>/i",$post_content) ) { // there's an iframe at start of post, remove it.
+				$post_content = preg_replace("/<iframe[^>]+\>/i", "", $post_content, 1);	
+			}
+			if ( preg_match('#^<p><br ?/>#i', $post_content) ) { // there's a line break at start of post, remove it.
+				$post_content = preg_replace("#^<p><br ?/>#i", "<p>", $post_content, 1);
+			} 
+			$content .= $post_content . '</div>'; 
 
 			$content .= $after_widget;
 
