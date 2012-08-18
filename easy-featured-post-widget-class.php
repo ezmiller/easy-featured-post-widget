@@ -18,8 +18,7 @@ class Easy_Featured_Post_Widget extends WP_Widget {
 
 		// get user settings
 		$post_to_display = empty($instance['post-to-display']) ? 'news' : $instance['post-to-display'];
-		$set_width_in_css = $instance['set-width-in-css'];
-		$set_height_in_css = $instance['set-height-in-css'];
+		$disable_media_frame = $instance['disable-media-frame'];
 		$mf_width = empty($instance['media-frame-width']) ? '220' : $instance['media-frame-width'];
 		$mf_height = empty($instance['media-frame-height']) ? '120' : $instance['media-frame-height'];
 		$img_offset_x = empty($instance['img-offset-x']) ? '0' : $instance['img-offset-x'];
@@ -46,32 +45,34 @@ class Easy_Featured_Post_Widget extends WP_Widget {
 
 		    $content = $before_widget;
 
-		    // construct video or image content
-		    if ( strpos($url, 'youtu.be') || strpos($url,'youtube') ) { // a youtube vid
-		    	$content .= '<iframe id="media-frame" width="' . $mf_width . 'px" height="' . $mf_height . 'px" src="';
-		    	$content .= $stripped_url . '?rel=0;controls=0;wmode=opaque" frameborder="0"';
-		    	$content .= ' webkitAllowFullScreen mozallowfullscreen';
-		    	$content .= '  allowFullScreen></iframe>' . "\n";              
-		    } 
-		    elseif ( strpos($url, 'vimeo') ) { // a vimeo vid
-		    	$content = '<iframe id="media-frame" width="' . $mf_width . '" height="' . $mf_height . '" src="';
-		    	$content .= $stripped_url . '?rel=0;controls=0" frameborder="0"';
-		    	$content .= ' webkitAllowFullScreen mozallowfullscreen';
-		    	$content .= '  allowFullScreen></iframe>' . "\n";              
-		    }
-		    elseif ( strpos($url, 'soundcloud') ) { // a sound cloud widget
-        		$content .= '<iframe id="media-frame" ';
-				$content .= 'width="' . $mf_width . '"';
-			    $content .= ' height="' . $mf_height . '"';
-        		$content .= ' src="' . $url .'"></iframe>';
-        	}
-		    elseif ( strlen($img) > 0 ) { // it's an image
-			    $content = '<div id="media-frame" style="overflow:hidden;';
-			    $content .= 'width:' . $mf_width . 'px;';
-			    $content .= 'height:' . $mf_height . 'px;';
-			    $content .= '"><img src="' . $img . '" width="'. $mf_width . '"';
-			    $content .= ' style="margin-top:' . $img_offset_y . 'px; margin-left:' . $img_offset_x . 'px;"/>';
-			    $content .= '</div>';
+		    // if enabled, construct video or image content
+		    if ( !$disable_media_frame ) {
+			    if ( strpos($url, 'youtu.be') || strpos($url,'youtube') ) { // a youtube vid
+			    	$content .= '<iframe id="media-frame" width="' . $mf_width . 'px" height="' . $mf_height . 'px" src="';
+			    	$content .= $stripped_url . '?rel=0;controls=0;wmode=opaque" frameborder="0"';
+			    	$content .= ' webkitAllowFullScreen mozallowfullscreen';
+			    	$content .= '  allowFullScreen></iframe>' . "\n";              
+			    } 
+			    elseif ( strpos($url, 'vimeo') ) { // a vimeo vid
+			    	$content = '<iframe id="media-frame" width="' . $mf_width . '" height="' . $mf_height . '" src="';
+			    	$content .= $stripped_url . '?rel=0;controls=0" frameborder="0"';
+			    	$content .= ' webkitAllowFullScreen mozallowfullscreen';
+			    	$content .= '  allowFullScreen></iframe>' . "\n";              
+			    }
+			    elseif ( strpos($url, 'soundcloud') ) { // a sound cloud widget
+	        		$content .= '<iframe id="media-frame" ';
+					$content .= 'width="' . $mf_width . '"';
+				    $content .= ' height="' . $mf_height . '"';
+	        		$content .= ' src="' . $url .'"></iframe>';
+	        	}
+			    elseif ( strlen($img) > 0 ) { // it's an image
+				    $content = '<div id="media-frame" style="overflow:hidden;';
+				    $content .= 'width:' . $mf_width . 'px;';
+				    $content .= 'height:' . $mf_height . 'px;';
+				    $content .= '"><img src="' . $img . '" width="'. $mf_width . '"';
+				    $content .= ' style="margin-top:' . $img_offset_y . 'px; margin-left:' . $img_offset_x . 'px;"/>';
+				    $content .= '</div>';
+				}
 			}
 
 			// create content within div
@@ -102,6 +103,7 @@ class Easy_Featured_Post_Widget extends WP_Widget {
 		$instance = $old_instance;
 		
 		$instance['post-to-display'] = strip_tags($new_instance['post-to-display']);
+		$instance['disable-media-frame'] = isset($new_instance['disable-media-frame']) ? 1 : 0;
 		$instance['media-frame-width'] = strip_tags($new_instance['media-frame-width']);
 		$instance['media-frame-height'] = strip_tags($new_instance['media-frame-height']);
 		$instance['img-offset-x'] = strip_tags($new_instance['img-offset-x']);
@@ -156,14 +158,23 @@ class Easy_Featured_Post_Widget extends WP_Widget {
 		$content .= '</select>';
 		$content .= '</p>';
 
+		// Disable Media Frame?
+		$content .= "<p>";		
+		$content .= '<input type="checkbox" id="' . $this->get_field_id('disable-media-frame') . '"';
+		$content .= ' name="' . $this->get_field_name('disable-media-frame') . '" '; 
+		$content .= checked($instance['disable-media-frame'], true, false);
+		$content .= '></input>';
+		$content .= '<label for="' . $this->get_field_id('disable-media-frame') . '"> Do not display Image/Video/Embed</label>';
+		$content .= '</p>';
+
 		// Width input
 		$content .= "<p>";
 		$content .= '<label for="' . $this->get_field_id('media-frame-width') . '">Image/Video/Embed Width (in px): </label><br/>';
 		$content .= '<input style="width:50%" type="number" id="' . $this->get_field_id('media-frame-width') . '"';
 		$content .= ' name="' . $this->get_field_name('media-frame-width') . '"'; 
 		$content .= ' value="' . $instance['media-frame-width'] . '"';
-		if ( $instance['set-width-in-css'] ) {
-			$content .= ' readonly="readonly"';
+		if ( $instance['disable-media-frame'] ) {
+			$content .= ' readonly';
 		}
 		$content .= '></input>';
 		$content .= '</p>';
@@ -174,8 +185,8 @@ class Easy_Featured_Post_Widget extends WP_Widget {
 		$content .= '<input style="width:50%" type="number" id="' . $this->get_field_id('media-frame-height') . '"';
 		$content .= ' name="' . $this->get_field_name('media-frame-height') . '"';
 		$content .= ' value="' . $instance['media-frame-height'] . '"';
-		if ( $instance['set-height-in-css'] ) {
-			$content .= ' readonly="readonly"';
+		if ( $instance['disable-media-frame'] ) {
+			$content .= ' readonly';
 		}
 		$content .= '></input>';
 		$content .= '</p>';
@@ -197,6 +208,22 @@ class Easy_Featured_Post_Widget extends WP_Widget {
 		$content .= ' name="' . $this->get_field_name('img-offset-y') . '"';
 		$content .= ' value="' . $instance['img-offset-y'] . '"/>';
 		$content .= '</p>';
+
+		// jQuery script to manage fields
+        $content .= '<script>';
+        $content .= 'jQuery(document).ready(function () { ';
+            $content .= 'jQuery("#' . $this->get_field_id('disable-media-frame') . '").change(function() { ';
+                $content .= 'if ( jQuery("#' . $this->get_field_id('disable-media-frame') . '").is(":checked") ) { '; 
+                	$content .= 'jQuery("#' . $this->get_field_id('media-frame-width') . '").attr("readonly", "readonly"); ';
+                    $content .= 'jQuery("#' . $this->get_field_id('media-frame-height') . '").attr("readonly", "readonly"); ';
+                $content .= '} ';
+                $content .= 'else { ';
+                	$content .=  'jQuery("#' . $this->get_field_id('media-frame-width') . '").removeAttr("readonly"); ';
+                	$content .=  'jQuery("#' . $this->get_field_id('media-frame-height') . '").removeAttr("readonly"); ';
+                $content .= '}';
+            $content .= '}); '; 
+        $content .= '});';
+        $content .= '</script>';
 
 		// Output form.
 		echo $content;
